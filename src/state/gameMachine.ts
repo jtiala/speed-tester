@@ -87,15 +87,20 @@ export const gameMachine = createMachine(
         invoke: {
           src:
             ({ gameSettings }) =>
-            (send) =>
-              timer(
-                () =>
-                  send({
-                    type: "FLASH",
-                  }),
-                gameSettings.minTimeout,
-                gameSettings.maxTimeout
-              ),
+            (send) => {
+              const id = setTimeout(() => {
+                timer(
+                  () =>
+                    send({
+                      type: "FLASH",
+                    }),
+                  gameSettings.minTimeout,
+                  gameSettings.maxTimeout
+                );
+              }, 1000);
+
+              return () => clearTimeout(id);
+            },
         },
         on: {
           FLASH: {
