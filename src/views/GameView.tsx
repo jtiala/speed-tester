@@ -11,7 +11,7 @@ interface Props {
 }
 
 function GameView({ gameSettings, gameState, onClick }: Props) {
-  const flashingButton = gameState.flashedButtons.at(-1);
+  const flashingButton = gameState.queuedFlashes.at(-1);
 
   const buttons = Array(gameSettings.numberOfButtons)
     .fill(undefined)

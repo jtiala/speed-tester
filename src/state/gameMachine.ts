@@ -2,20 +2,21 @@ import { assign, createMachine } from "xstate";
 
 export interface GameSettings {
   numberOfButtons: number;
-  maxUnclickedFlashes: number;
+  maxQueuedFlashes: number;
   minTimeout: number;
   maxTimeout: number;
 }
 
 export interface GameState {
-  flashedButtons: number[];
+  queuedFlashes: number[];
+  lastFlash?: number;
   score: number;
 }
 
 const commonGameSettings = {
   minTimeout: 200,
   maxTimeout: 2000,
-  maxUnclickedFlashes: 10,
+  maxQueuedFlashes: 10,
 };
 
 export const classicGameSettings: GameSettings = {
@@ -26,7 +27,7 @@ export const classicGameSettings: GameSettings = {
 export const easyGameSettings: GameSettings = {
   ...commonGameSettings,
   maxTimeout: 3000,
-  maxUnclickedFlashes: 1000000,
+  maxQueuedFlashes: 1000000,
   numberOfButtons: 3,
 };
 
@@ -39,7 +40,7 @@ export const rapidGameSettings: GameSettings = {
   ...commonGameSettings,
   minTimeout: 100,
   maxTimeout: 500,
-  maxUnclickedFlashes: 4,
+  maxQueuedFlashes: 4,
   numberOfButtons: 3,
 };
 
@@ -61,14 +62,14 @@ export const gameMachine = createMachine(
     context: {
       gameSettings: classicGameSettings,
       gameState: {
-        flashedButtons: [],
+        queuedFlashes: [],
         score: 0,
       },
     },
     initial: "initial",
     states: {
       initial: {
-        entry: "clearTimeouts",
+        entry: "clearTimer",
         on: {
           START: {
             actions: "setGameSettings",
@@ -80,11 +81,12 @@ export const gameMachine = createMachine(
         entry: "resetGameState",
         always: [
           {
-            cond: "tooManyUnclickedFlashes",
+            cond: "queueLimitReached",
             target: "gameOver",
           },
         ],
         invoke: {
+          id: "startTimer",
           src:
             ({ gameSettings }) =>
             (send) => {
@@ -104,21 +106,21 @@ export const gameMachine = createMachine(
         },
         on: {
           FLASH: {
-            actions: "flashButton",
+            actions: "handleFlash",
           },
           CLICK: [
             {
-              cond: "clickValid",
-              actions: "handleValidClick",
+              cond: "clickInvalid",
+              target: "gameOver",
             },
             {
-              target: "gameOver",
+              actions: "handleClick",
             },
           ],
         },
       },
       gameOver: {
-        entry: "clearTimeouts",
+        entry: "clearTimer",
         on: {
           START: {
             actions: "setGameSettings",
@@ -129,47 +131,54 @@ export const gameMachine = createMachine(
     },
     on: {
       RESET: {
-        actions: ["clearTimeouts", "resetGameState"],
         target: "initial",
       },
     },
   },
   {
     actions: {
-      setGameSettings: assign(({ gameSettings }, event) => ({
-        gameSettings:
-          event.type === "START" ? event.gameSettings : gameSettings,
-      })),
+      setGameSettings: assign((context, event) => {
+        if (event.type !== "START") {
+          return {};
+        }
+
+        return {
+          gameSettings: event.gameSettings,
+        };
+      }),
       resetGameState: assign(({ gameState }) => ({
         gameState: {
           ...gameState,
-          flashedButtons: [],
+          queuedFlashes: [],
           score: 0,
         },
       })),
-      flashButton: assign(({ gameSettings, gameState }, event) => ({
+      handleFlash: assign(({ gameSettings, gameState }, event) => {
+        if (event.type !== "FLASH") {
+          return {};
+        }
+
+        const button = getRandomButton(
+          gameSettings.numberOfButtons,
+          gameState.lastFlash
+        );
+
+        return {
+          gameState: {
+            ...gameState,
+            queuedFlashes: [...gameState.queuedFlashes, button],
+            lastFlash: button,
+          },
+        };
+      }),
+      handleClick: assign(({ gameState }) => ({
         gameState: {
           ...gameState,
-          flashedButtons:
-            event.type === "FLASH"
-              ? [
-                  ...gameState.flashedButtons,
-                  getRandomButton(
-                    gameSettings.numberOfButtons,
-                    gameState.flashedButtons.at(-1)
-                  ),
-                ]
-              : gameState.flashedButtons,
-        },
-      })),
-      handleValidClick: assign(({ gameState }) => ({
-        gameState: {
-          ...gameState,
-          flashedButtons: gameState.flashedButtons.slice(1),
+          queuedFlashes: gameState.queuedFlashes.slice(1),
           score: gameState.score + 1,
         },
       })),
-      clearTimeouts: () => {
+      clearTimer: () => {
         let id = window.setTimeout(() => undefined, 0);
 
         while (id--) {
@@ -178,12 +187,12 @@ export const gameMachine = createMachine(
       },
     },
     guards: {
-      tooManyUnclickedFlashes: ({ gameSettings, gameState }) =>
-        gameState.flashedButtons.length > gameSettings.maxUnclickedFlashes,
-      clickValid: ({ gameState }, event) =>
-        event.type === "CLICK" &&
-        gameState.flashedButtons.length > 0 &&
-        gameState.flashedButtons[0] === event.button,
+      queueLimitReached: ({ gameSettings, gameState }) =>
+        gameState.queuedFlashes.length > gameSettings.maxQueuedFlashes,
+      clickInvalid: ({ gameState }, event) =>
+        event.type !== "CLICK" ||
+        gameState.queuedFlashes.length === 0 ||
+        gameState.queuedFlashes[0] !== event.button,
     },
   }
 );
