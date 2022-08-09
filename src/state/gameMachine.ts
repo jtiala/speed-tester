@@ -1,16 +1,16 @@
 import { assign, createMachine } from "xstate";
 
-export interface GameSettings {
-  numberOfButtons: number;
-  maxQueuedFlashes: number;
-  minTimeout: number;
-  maxTimeout: number;
-}
-
 export interface GameState {
   queuedFlashes: number[];
   lastFlash?: number;
   score: number;
+}
+
+export interface GameSettings {
+  minTimeout: number;
+  maxTimeout: number;
+  maxQueuedFlashes: number;
+  numberOfButtons: number;
 }
 
 const commonGameSettings = {
@@ -49,8 +49,8 @@ export const gameMachine = createMachine(
     predictableActionArguments: true,
     schema: {
       context: {} as {
-        gameSettings: GameSettings;
         gameState: GameState;
+        gameSettings: GameSettings;
       },
       events: {} as
         | { type: "START"; gameSettings: GameSettings }
@@ -60,11 +60,11 @@ export const gameMachine = createMachine(
     },
     id: "gameMachine",
     context: {
-      gameSettings: classicGameSettings,
       gameState: {
         queuedFlashes: [],
         score: 0,
       },
+      gameSettings: classicGameSettings,
     },
     initial: "initial",
     states: {
@@ -153,7 +153,7 @@ export const gameMachine = createMachine(
           score: 0,
         },
       })),
-      handleFlash: assign(({ gameSettings, gameState }, event) => {
+      handleFlash: assign(({ gameState, gameSettings }, event) => {
         if (event.type !== "FLASH") {
           return {};
         }
@@ -187,7 +187,7 @@ export const gameMachine = createMachine(
       },
     },
     guards: {
-      queueLimitReached: ({ gameSettings, gameState }) =>
+      queueLimitReached: ({ gameState, gameSettings }) =>
         gameState.queuedFlashes.length > gameSettings.maxQueuedFlashes,
       clickInvalid: ({ gameState }, event) =>
         event.type !== "CLICK" ||
