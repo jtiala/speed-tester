@@ -13,31 +13,29 @@ export interface GameSettings {
   numberOfButtons: number;
 }
 
-const commonGameSettings = {
+const defaultGameSettings: GameSettings = {
   minTimeout: 200,
   maxTimeout: 2000,
   maxQueuedFlashes: 10,
-};
-
-export const classicGameSettings: GameSettings = {
-  ...commonGameSettings,
   numberOfButtons: 4,
 };
 
+export const classicGameSettings: GameSettings = defaultGameSettings;
+
 export const easyGameSettings: GameSettings = {
-  ...commonGameSettings,
+  ...defaultGameSettings,
   maxTimeout: 3000,
   maxQueuedFlashes: 1000000,
   numberOfButtons: 3,
 };
 
 export const matrixGameSettings: GameSettings = {
-  ...commonGameSettings,
+  ...defaultGameSettings,
   numberOfButtons: 20,
 };
 
 export const rapidGameSettings: GameSettings = {
-  ...commonGameSettings,
+  ...defaultGameSettings,
   minTimeout: 100,
   maxTimeout: 500,
   maxQueuedFlashes: 4,
