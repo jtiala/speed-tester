@@ -13,9 +13,9 @@ export interface GameState {
 }
 
 const commonGameSettings = {
-  maxUnclickedFlashes: 10,
-  minTimeout: 150,
+  minTimeout: 200,
   maxTimeout: 2000,
+  maxUnclickedFlashes: 10,
 };
 
 export const classicGameSettings: GameSettings = {
@@ -25,22 +25,22 @@ export const classicGameSettings: GameSettings = {
 
 export const easyGameSettings: GameSettings = {
   ...commonGameSettings,
-  numberOfButtons: 3,
   maxTimeout: 3000,
   maxUnclickedFlashes: 1000000,
+  numberOfButtons: 3,
 };
 
 export const matrixGameSettings: GameSettings = {
   ...commonGameSettings,
   numberOfButtons: 20,
-  maxUnclickedFlashes: 1000000,
 };
 
 export const rapidGameSettings: GameSettings = {
   ...commonGameSettings,
-  numberOfButtons: 3,
+  minTimeout: 100,
   maxTimeout: 500,
   maxUnclickedFlashes: 4,
+  numberOfButtons: 3,
 };
 
 export const gameMachine = createMachine(
