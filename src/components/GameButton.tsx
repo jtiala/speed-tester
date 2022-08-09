@@ -5,7 +5,7 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isFlashing: boolean;
 }
 
-function SpeedTesterButton({ buttonNumber, isFlashing, ...props }: Props) {
+function GameButton({ buttonNumber, isFlashing, ...props }: Props) {
   const colors = ["orange", "red", "yellow", "green", "blue"];
   const color = colors[buttonNumber % colors.length];
 
@@ -56,4 +56,4 @@ function SpeedTesterButton({ buttonNumber, isFlashing, ...props }: Props) {
   );
 }
 
-export default SpeedTesterButton;
+export default GameButton;

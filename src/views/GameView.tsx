@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import Score from "../components/Score";
-import SpeedTesterButton from "../components/SpeedTesterButton";
+import GameButton from "../components/GameButton";
 import Stack from "../components/Stack";
 import { GameSettings, GameState } from "../state/gameMachine";
 
@@ -19,7 +19,7 @@ function GameView({ gameSettings, gameState, onClick }: Props) {
       const buttonNumber = i + 1;
 
       return (
-        <SpeedTesterButton
+        <GameButton
           key={buttonNumber}
           buttonNumber={buttonNumber}
           isFlashing={flashingButton === buttonNumber}
